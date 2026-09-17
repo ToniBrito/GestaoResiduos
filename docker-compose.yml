@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  # 1. Banco de Dados SQL Server no Docker
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver_gestaoresiduos
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=SqlWasteManager_123!
+    ports:
+      - "1433:1433"
+    networks:
+      - app-network
+
+  # 2. Aplicação .NET Web API
+  api:
+    image: gestaoresiduos-api
+    build:
+      context: .
+      dockerfile: GestaoResiduos/Dockerfile
+    container_name: api_gestaoresiduos
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080;8081
+      - ASPNETCORE_URLS=http://+:8080;http://+:8081
+      - ConnectionStrings__DatabaseConnection=Server=sqlserver,1433;Database=DB_GestaoResiduos;User Id=sa;Password=SqlWasteManager_123!;TrustServerCertificate=True;Encrypt=False;
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    depends_on:
+      - sqlserver
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
